@@ -1,0 +1,163 @@
+[build-system]
+requires = ["hatchling>=1.5.0", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch]
+version = { source = "vcs" }
+
+[project]
+name = "botwit"
+description = "My Twitter Bot."
+authors = [
+  { name = "gjeusel", email = "gjeusel@gmail.com" },
+]
+readme = "README.md"
+classifiers = [
+  "Intended Audience :: Developers",
+  "Natural Language :: English",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Software Development",
+]
+requires-python = ">=3.10"
+dynamic = ["version"]
+
+dependencies = [
+  # "pandas==1.5.*",
+]
+
+[project.optional-dependencies]
+dev = [
+  # types
+  # "types-pytz",
+  # "types-pyyaml",
+  #
+  # testing libs:
+  "coverage[toml] >= 6.5.0,<7.0",
+  "pytest==7.1.*",
+  "pytest-sugar==0.9.*",
+  "pytest-mock==3.10.*",
+  # "pytest-asyncio==0.20.*",
+  # "dirty-equals==0.5.*",
+  #
+  # code quality:
+  "pre-commit==2.20.*",
+  "black==22.10.*",
+  "ruff",                  # replacement of flake8 & associated
+  #
+  "mypy==0.991",
+#
+  # packaging:
+  "pip-tools",#
+  # confort:
+  "pdbpp",
+  "ptpython",
+  "rich",
+  #
+  # project templating:
+  "cruft",
+  "cookiecutter",
+]
+
+doc = [
+  "mkdocs",
+  "mkdocstrings[python]",
+  "mkdocs-material",
+  "mkdocs-exclude",
+  "markdown-include",
+  "mdx-truly-sane-lists",
+]
+
+all = [
+  "botwit[dev]",
+  "botwit[doc]",
+]
+
+[tool.ruff]
+select = ["E", "F"]
+extend-select = [
+  "UP",  # pyupgrade
+  "C4",  # flake8-comprehensions
+  "ICN", # flake8-import-conventions
+  "B",   # flake8-bugbear
+  "A",   # flake8-builtins
+  "I",   # isort
+]
+
+ignore = [
+  "E501", # line too long
+]
+
+# fix = true  # always auto-fix
+unfixable = [
+  # "F401",  # import but unused
+]
+
+per-file-ignores = { "__init__.py" = [
+  # "F401", # import but unused
+  # "E402", # import not at top file
+] }
+
+[tool.ruff.flake8-import-conventions.aliases]
+numpy = "np"
+pandas = "pd"
+
+[tool.black]
+color = true
+line-length = 88
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+# filterwarnings = ["error"]  # make the warnings act like exceptions
+# addopts = "--cov --no-cov-on-fail"
+# timeout = 10  # maximum seconds duration for a unittest
+# asyncio_mode = "auto"  # when using pytest-asyncio
+markers = ["stress: stress tests (deselect with '-m \"not stress\"')"]
+filterwarnings = [
+  # "action:message:category:module:line"
+  #
+  # distutils:
+  "ignore:distutils Version classes are deprecated:DeprecationWarning",
+]
+
+[tool.coverage]
+run = { source = [
+  "botwit",
+], branch = true, omit = [
+  "*tests/*",
+], context = "${CONTEXT}" }
+report = { precision = 2, exclude_lines = [
+  "pragma: no cover",
+  "raise NotImplementedError",
+  "raise NotImplemented",
+  "if TYPE_CHECKING:",
+  "@overload",
+], sort = "Miss" }
+
+[tool.mypy]
+python_version = "3.10"
+
+# Rules can be found at:
+# https://mypy.readthedocs.io/en/stable/command_line.html
+# just replace the '-' by '_' of command line options
+
+strict = true
+warn_return_any = false
+show_error_codes = true
+
+# permissives rules:
+implicit_reexport = true # no need to specify __all__ in modules
+# follow_imports = "silent"  # does not work when using dmypy https://github.com/python/mypy/issues/9475
+ignore_missing_imports = true # ignore missing stubs
+
+[[tool.mypy.overrides]]
+module = ["tests.*", "docs.*"]
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+
+[tool.cruft]
+skip = ["botwit/__init__.py", "tests"]

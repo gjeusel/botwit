@@ -1,0 +1,20 @@
+{
+  "template": "/Users/gjeusel/src/soft-cookiecutter",
+  "commit": "b8127a661eff28235dae78f998759a01302b64d3",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "github_username": "gjeusel",
+      "project_name": "botwit",
+      "project_slug": "botwit",
+      "project_short_description": "My Twitter Bot.",
+      "dockerfile": "yes",
+      "open_source_license": "MIT license",
+      "_copy_without_render": [
+        "{{cookiecutter.project_name}}/.github/workflows/ci.yml"
+      ],
+      "_template": "/Users/gjeusel/src/soft-cookiecutter"
+    }
+  },
+  "directory": null
+}
