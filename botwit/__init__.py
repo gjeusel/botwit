@@ -1,4 +1,4 @@
-"""botwit My Twitter Bot."""
+"""botwit - My Twitter Bot."""
 
 from importlib import metadata
 

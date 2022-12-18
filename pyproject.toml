@@ -8,9 +8,7 @@ version = { source = "vcs" }
 [project]
 name = "botwit"
 description = "My Twitter Bot."
-authors = [
-  { name = "gjeusel", email = "gjeusel@gmail.com" },
-]
+authors = [{ name = "gjeusel", email = "gjeusel@gmail.com" }]
 readme = "README.md"
 classifiers = [
   "Intended Audience :: Developers",
@@ -25,6 +23,11 @@ requires-python = ">=3.10"
 dynamic = ["version"]
 
 dependencies = [
+  "pydantic[dotenv]",
+  "fastapi",
+  "python-twitter",
+  "httpx==0.23.*",
+  "httpx_auth==0.15.*",
   # "pandas==1.5.*",
 ]
 
@@ -45,12 +48,12 @@ dev = [
   # code quality:
   "pre-commit==2.20.*",
   "black==22.10.*",
-  "ruff",                  # replacement of flake8 & associated
+  "ruff",               # replacement of flake8 & associated
   #
   "mypy==0.991",
-#
+  #
   # packaging:
-  "pip-tools",#
+  "pip-tools", #
   # confort:
   "pdbpp",
   "ptpython",
@@ -70,10 +73,7 @@ doc = [
   "mdx-truly-sane-lists",
 ]
 
-all = [
-  "botwit[dev]",
-  "botwit[doc]",
-]
+all = ["botwit[dev]", "botwit[doc]"]
 
 [tool.ruff]
 select = ["E", "F"]
@@ -88,6 +88,7 @@ extend-select = [
 
 ignore = [
   "E501", # line too long
+  "A003", # Class attribute `id` is shadowing a python builtin
 ]
 
 # fix = true  # always auto-fix
