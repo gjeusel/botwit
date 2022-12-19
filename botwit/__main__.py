@@ -18,7 +18,16 @@ def main():
     user = twitter.get_user("@gjeusel")
     # tweets = twitter.get_user_tweets(user.id)
     mentions = twitter.get_user_mentions(user.id)
-    __import__("pdb").set_trace()  # BREAKPOINT
+
+    latest_mention = max(mentions, key=lambda x: x.created_at)
+
+    tweet = twitter.get_tweet(
+        latest_mention.id,
+        expansions=[
+            "referenced_tweets.id",
+            "referenced_tweets.id.author_id",
+        ],
+    )
 
 
 if __name__ == "__main__":
