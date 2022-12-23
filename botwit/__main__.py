@@ -104,24 +104,26 @@ def create_new_memo(notion: NotionClient, memo: TweetMemo) -> dict[str, Any]:
         for tweet in memo.conversation
     ]
 
+    root_tweet = memo.conversation[0]
+
     payload = {
         "parent": {"database_id": CFG.NOTION_DATABASE_ID},
         "children": children,
         "icon": {"emoji": "🪶"},
         "properties": {
-            "URL": {"url": memo.conversation[0].url},
+            "URL": {"url": root_tweet.url},
             "Content": {
                 "rich_text": [
                     {
                         "type": "text",
                         "text": {
-                            "content": memo.conversation[0].text,
-                            "link": {"url": memo.conversation[0].url},
+                            "content": root_tweet.text,
+                            "link": {"url": root_tweet.url},
                         },
                     }
                 ]
             },
-            "tweet_date": {"date": {"start": "2022-11-28"}},
+            "tweet_date": {"date": {"start": memo.date}},
             "Tags": {"multi_select": tags},
             "Author": {
                 "title": [
