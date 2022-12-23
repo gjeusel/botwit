@@ -17,8 +17,6 @@
       <img src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white" alt="pre-commit">
   </a>
 </p>
-<br/>
-</p>
 
 <p align="center">
   <em>My Twitter Bot.</em>
