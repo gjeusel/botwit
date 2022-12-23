@@ -134,7 +134,7 @@ def create_new_memo(notion: NotionClient, memo: TweetMemo) -> dict[str, Any]:
     }
 
     logger.info(f"Creating a new page for memo: {memo!r}")
-    return notion.pages.create(**payload)
+    return notion.pages.create(**payload)  # type: ignore
 
 
 def main() -> None:
@@ -158,9 +158,7 @@ def main() -> None:
             already_stored.add(tweet_url)
 
     new_memos = [
-        memo
-        for memo in memos
-        if memo.conversation[0].url not in already_stored
+        memo for memo in memos if memo.conversation[0].url not in already_stored
     ]
     if len(new_memos) == 0:
         logger.info("Found no new memo.")
