@@ -87,21 +87,13 @@ jobs:
       - name: List deps
         run: pip freeze
 
-      - run: mkdir coverage
-
       - name: Test
         run: coverage run -m pytest -vv
         env:
-          COVERAGE_FILE: coverage/.coverage.${{ runner.os }}-py${{ matrix.python-version }}
+          COVERAGE_FILE: .coverage.${{ runner.os }}-py${{ matrix.python-version }}
           CONTEXT: ${{ runner.os }}-py${{ matrix.python-version }}
 
       - run: coverage report
-
-      - name: Store coverage files
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage
-          path: coverage
 
   check-docs-build:
     runs-on: ubuntu-latest

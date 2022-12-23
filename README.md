@@ -1,9 +1,5 @@
-<p align="center">
-  <h1> botwit </h1>
-</p>
-<p align="center">
-  <em>My Twitter Bot.</em>
-</p>
+<h1 align="center"> botwit </h1>
+
 <p align="center">
   <a href="https://github.com/gjeusel/botwit/actions?query=workflow%3ACI+branch%3A+main+">
       <img src="https://github.com/gjeusel/botwit/workflows/CI/badge.svg?event=push&branch=main" alt="Test Suite" onerror="this.style.display='none'">
@@ -22,6 +18,10 @@
   </a>
 </p>
 <br/>
+</p>
+
+<p align="center">
+  <em>My Twitter Bot.</em>
 </p>
 
 ---
