@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Generator, Literal, Sequence
+from typing import Any, Generator, Literal, Sequence, TypedDict
 
 import httpx
 import httpx_auth
-from pydantic import BaseModel
+import structlog
+from pydantic import BaseModel, Field, root_validator
+from typing_extensions import NotRequired
+
+logger = structlog.getLogger(__name__)
 
 
 class TwitterError(Exception):
-    def __init__(self, payload: dict[str, Any] | None = None):
+    def __init__(
+        self, *, message: str | None = None, payload: list[dict[str, Any]] | None = None
+    ):
         """
 
         Note: payload is like:
@@ -31,27 +37,48 @@ class TwitterError(Exception):
         ```
 
         """
+        self.message = message
         self.payload = payload
+        super().__init__(message, payload)
 
-        def __str__(self) -> str:
-            if self.payload:
-                errs = [
-                    f"{e['resource_type']} '{e['title']}': {e['detail']}"
-                    for e in self.payload
-                ]
-                if len(errs) > 1:
-                    raise NotImplementedError
-                else:
-                    return errs[0]
+    def __str__(self) -> str:
+        if self.payload:
+            errs = [
+                f"{e['resource_type']} '{e['title']}': {e['detail']}"
+                for e in self.payload
+            ]
+            if len(errs) > 1:
+                errs.insert(0, "Had several issues.")
+                return "\n  - ".join(errs)
             else:
-                raise super().__str__()
+                return errs[0]
+        elif self.message:
+            return self.message
+        else:
+            raise super().__str__()  # type: ignore
+
+
+def handle_http_error(response: httpx.Response) -> httpx.Response:
+    if response.is_error:
+        response.read()  # ensure response is read before parsing json
+        data = response.json()
+        req = response.request
+        errors = data["errors"]
+        if len(errors) > 1:
+            raise NotImplementedError
+
+        error = errors[0]
+        logger.error(f"Failed {req.method} - {req.url.path}.", **error)
+        raise TwitterError(message=error["message"])
+
+    return response
 
 
 def handle_twitter_error(response: httpx.Response) -> httpx.Response:
     response.read()  # ensure response is read before parsing json
     data = response.json()
     if data.get("errors"):
-        raise TwitterError(data.get("errors"))
+        raise TwitterError(payload=data.get("errors"))
     return response
 
 
@@ -68,7 +95,7 @@ class TwitterTokenCache(httpx_auth.oauth2_tokens.TokenMemoryCache):
 class TwitterOAuth2ClientCredentials(httpx_auth.OAuth2ClientCredentials):
     # https://developer.twitter.com/en/docs/authentication/api-reference/token
 
-    token_cache = TwitterTokenCache()
+    token_cache = TwitterTokenCache()  # type: ignore
 
     def auth_flow(
         self, request: httpx.Request
@@ -93,13 +120,26 @@ class Tweet(BaseModel):
     author_id: int
     text: str
     created_at: datetime
+    conversation_id: int
 
-    edit_history_tweet_ids: list[int]  # always there even if not asked
+    in_reply_to_user_id: int | None = None
 
-    referenced_tweets: list[dict[str, str]] | None = None
+    referenced_tweets: list[dict[str, str]] = Field(default_factory=list)
 
-    users: list[User] | None = None
-    tweets: list[Tweet] | None = None
+    # coming from expansions:
+    users: list[User] = Field(default_factory=list)
+    tweets: list[Tweet] = Field(default_factory=list)
+
+    unmapped: dict[str, Any] = Field(default_factory=dict)
+
+    @root_validator(pre=True)
+    def _fill_unmapped(cls, values: dict[str, Any]) -> dict[str, Any]:
+        unmapped: dict[str, Any] = {}
+        for key, value in values.items():
+            if key not in cls.__fields__:
+                unmapped[key] = value
+
+        return values | {"unmapped": unmapped}
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> Tweet:
@@ -114,6 +154,15 @@ class Tweet(BaseModel):
     def author(self) -> User | None:
         return {u.id: u for u in self.users or []}.get(self.author_id)
 
+    @property
+    def url(self) -> str:
+        if self.author:
+            return f"https://twitter.com/{self.author.username}/status/{self.id}"
+        else:
+            raise TwitterError(
+                message=f"Can't build url while missing author username ({self!r}) "
+            )
+
     def __repr__(self) -> str:
         core = f"Tweet n°{self.id}"
 
@@ -126,6 +175,33 @@ class Tweet(BaseModel):
             text = text[:text_peek_max_len] + "..."
 
         return f"<{core}> {text}"
+
+
+def _parse_tweets_payload(payload: dict[str, Any]) -> list[Tweet]:
+    if "data" not in payload:
+        return []
+
+    data = payload["data"]
+    included_tweets = payload.get("includes", {}).get("tweets", [])
+    included_users = payload.get("includes", {}).get("users", [])
+    if isinstance(data, dict):
+        data.update({"tweets": included_tweets, "users": included_users})
+        return [Tweet(**data)]
+    else:
+        map_id_includes = {
+            t["id"]: t
+            | {"users": [u for u in included_users if u["id"] == t["author_id"]]}
+            for t in included_tweets
+        }
+        tweets: list[Tweet] = []
+        for tweet in data:
+            if "referenced_tweets" in tweet:
+                included_tweets = [
+                    map_id_includes[e["id"]] for e in tweet["referenced_tweets"]
+                ]
+                tweet.update({"tweets": included_tweets, "users": included_users})
+            tweets.append(Tweet(**tweet))
+        return tweets
 
 
 TweetExpansions = Literal[
@@ -164,12 +240,53 @@ TweetFields = Literal[
     "withheld",
 ]
 
-DEFAULT_TWEET_FIELDS: tuple[TweetFields] = (
+DEFAULT_TWEET_FIELDS: tuple[TweetFields, ...] = (
     "id",
     "author_id",
     "created_at",
     "text",
+    "conversation_id",
 )
+
+
+class PaginationParams(TypedDict):
+    max_results: NotRequired[int]
+
+
+class TweetQueryParams(TypedDict):
+    fields: NotRequired[Sequence[TweetFields]]
+    expansions: NotRequired[Sequence[TweetExpansions]]
+
+
+class PagTweetQueryParams(PaginationParams, TweetQueryParams):
+    pass
+
+
+# Note typing: can't use new peps
+#  - PEP 692 - Using TypedDict for more precise **kwargs typing (https://peps.python.org/pep-0692/)
+#  - PEP 655 – Marking individual TypedDict items as required or potentially-missing (https://peps.python.org/pep-0655/#usage-in-python-3-11)
+#
+#    def get_tweets(
+#        self,
+#        ids: Sequence[int],
+#        *,
+#        **kwargs: **TweetQueryParams,
+#    ) -> list[Tweet]:
+#
+# The reason is because it breaks black formatting & ruff linting.
+
+
+def _parse_params(params: PagTweetQueryParams) -> dict[str, Any]:
+    sain_params: dict[str, Any] = {
+        "tweet.fields": ",".join(
+            set(params.get("fields", ())) | set(DEFAULT_TWEET_FIELDS)
+        ),
+        "expansions": ",".join(params.get("expansions", ())),
+    }
+    if params.get("max_results"):
+        sain_params["max_results"] = params["max_results"]
+
+    return sain_params
 
 
 class TwitterClient(httpx.Client):
@@ -178,7 +295,7 @@ class TwitterClient(httpx.Client):
         consumer_key: str,
         consumer_secret: str,
         base_url: str = "https://api.twitter.com",
-        **kwargs: dict[str, Any],
+        **kwargs: Any,
     ):
         auth = TwitterOAuth2ClientCredentials(
             token_url=base_url + "/oauth2/token",
@@ -190,73 +307,105 @@ class TwitterClient(httpx.Client):
             "event_hooks": {
                 "request": [],
                 "response": [
-                    lambda resp: resp.raise_for_status(),
+                    handle_http_error,
                     handle_twitter_error,
                 ],
             },
         } | kwargs
-        super().__init__(base_url=base_url, auth=auth, **kwargs)
+        super().__init__(base_url=base_url, auth=auth, **kwargs)  # type: ignore
 
-    def get_user(self, username: str) -> User:
-        username = username.lstrip("@")
-        resp = self.get(f"/2/users/by/username/{username}")
+    def get_user(self, *, username: str | None = None, id: int | None = None) -> User:
+        if username:
+            username = username.lstrip("@")
+            resp = self.get(f"/2/users/by/username/{username}")
+        else:
+            resp = self.get(f"/2/users/{id}")
         return User(**resp.json()["data"])
 
     def get_tweets(
         self,
         ids: Sequence[int],
+        *,
         fields: Sequence[TweetFields] = DEFAULT_TWEET_FIELDS,
+        expansions: Sequence[TweetExpansions] = (),
     ) -> list[Tweet]:
         """
         https://developer.twitter.com/en/docs/twitter-api/tweets/lookup/api-reference/get-tweets
         """
         params = {
             "ids": ",".join(str(e) for e in ids),
-            "tweet.fields": ",".join(fields),
         }
-        resp = self.get("/2/tweets", params=params)
-        return [Tweet(**e) for e in resp.json()["data"]]
+        resp = self.get(
+            "/2/tweets",
+            params=params | _parse_params({"fields": fields, "expansions": expansions}),
+        )
+        return _parse_tweets_payload(resp.json())
 
     def get_tweet(
         self,
         id: int,
         *,
         fields: Sequence[TweetFields] = DEFAULT_TWEET_FIELDS,
-        expansions: Sequence[TweetExpansions],
+        expansions: Sequence[TweetExpansions] = (),
     ) -> Tweet:
         """
         https://developer.twitter.com/en/docs/twitter-api/tweets/lookup/api-reference/get-tweets-id
         """
-        params = {
-            "expansions": ",".join(expansions),
-            "tweet.fields": ",".join(fields),
-        }
-        resp = self.get(f"/2/tweets/{id}", params=params)
-        return Tweet.from_payload(resp.json())
+        resp = self.get(
+            f"/2/tweets/{id}",
+            params=_parse_params({"fields": fields, "expansions": expansions}),
+        )
+        return _parse_tweets_payload(resp.json())[0]
+
+    # _______ Search endpoint _______
+
+    def search_tweets(
+        self,
+        query: str,
+        *,
+        fields: Sequence[TweetFields] = DEFAULT_TWEET_FIELDS,
+        expansions: Sequence[TweetExpansions] = (),
+    ) -> list[Tweet]:
+        """
+        https://developer.twitter.com/en/docs/twitter-api/tweets/search/api-reference/get-tweets-search-recent
+        Query Builder Tool: https://developer.twitter.com/apitools/query?query=
+        """
+        resp = self.get(
+            "/2/tweets/search/recent",
+            params={"query": query}
+            | _parse_params({"fields": fields, "expansions": expansions}),
+        )
+        return _parse_tweets_payload(resp.json())
+
+    # _______  Timelines endpoint _______
 
     def get_user_tweets(
         self,
         user_id: int,
+        *,
         fields: Sequence[TweetFields] = DEFAULT_TWEET_FIELDS,
     ) -> list[Tweet]:
         """
         https://developer.twitter.com/en/docs/twitter-api/tweets/timelines/api-reference/get-users-id-tweets
         """
-        params = {
-            "fields": ",".join(fields),
-            "tweet.fields": ",".join(fields),
-        }
-        resp = self.get(f"/2/users/{user_id}/tweets", params=params)
-        return [Tweet(**e) for e in resp.json()["data"]]
+        resp = self.get(
+            f"/2/users/{user_id}/tweets",
+            params=_parse_params({"fields": fields}),
+        )
+        return _parse_tweets_payload(resp.json())
 
     def get_user_mentions(
-        self, user_id: int, fields: Sequence[TweetFields] = DEFAULT_TWEET_FIELDS
+        self,
+        user_id: int,
+        *,
+        fields: Sequence[TweetFields] = DEFAULT_TWEET_FIELDS,
+        expansions: Sequence[TweetExpansions] = (),
     ) -> list[Tweet]:
         """
         https://developer.twitter.com/en/docs/twitter-api/tweets/timelines/api-reference/get-users-id-mentions
         """
-        params = {
-            "tweet.fields": ",".join(fields),
-        }
-        resp = self.get(f"/2/users/{user_id}/mentions", params=params)
-        return [Tweet(**e) for e in resp.json()["data"]]
+        resp = self.get(
+            f"/2/users/{user_id}/mentions",
+            params=_parse_params({"fields": fields, "expansions": expansions}),
+        )
+        return _parse_tweets_payload(resp.json())

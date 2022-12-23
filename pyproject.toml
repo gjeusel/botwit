@@ -24,17 +24,18 @@ dynamic = ["version"]
 
 dependencies = [
   "pydantic[dotenv]",
-  "fastapi",
-  "python-twitter",
   "httpx==0.23.*",
   "httpx_auth==0.15.*",
-  # "pandas==1.5.*",
+  "notion-client==2.0.0",
+  "structlog",
+  "pytz",
 ]
 
 [project.optional-dependencies]
 dev = [
   # types
-  # "types-pytz",
+  "typing_extensions",
+  "types-pytz",
   # "types-pyyaml",
   #
   # testing libs:
