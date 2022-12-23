@@ -95,6 +95,8 @@ jobs:
           COVERAGE_FILE: coverage/.coverage.${{ runner.os }}-py${{ matrix.python-version }}
           CONTEXT: ${{ runner.os }}-py${{ matrix.python-version }}
 
+      - run: coverage report
+
       - name: Store coverage files
         uses: actions/upload-artifact@v3
         with:
