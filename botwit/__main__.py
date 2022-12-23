@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+from bdb import BdbQuit
 from dataclasses import dataclass
+from typing import Any
 
 import pytz
 import structlog
@@ -58,11 +60,23 @@ def get_recent_memos(twitter: TwitterClient, user: TwitterUser) -> list[TweetMem
             )
 
         target_tweet = mention.tweets[0]
+        if not target_tweet.author:
+            raise RuntimeError(f"Failed to fetch author on {target_tweet!r}")
+
         conversation = twitter.search_tweets(
-            query=f"conversation_id:{target_tweet.conversation_id} from:{target_tweet.author_id}",
+            query=" ".join(
+                [
+                    f"conversation_id:{target_tweet.conversation_id}",  # within this conversation
+                    f"from:{target_tweet.author_id}",  # from the author
+                    f"to:{target_tweet.author_id}",  # in reply to the author for threads
+                ],
+            ),
         )
-        if not conversation:
-            conversation = [target_tweet]
+        for tweet in conversation:
+            tweet.users = target_tweet.users
+
+        conversation.insert(0, target_tweet)
+        conversation.sort(key=lambda tweet: tweet.created_at)
 
         memos.append(
             TweetMemo(
@@ -76,28 +90,38 @@ def get_recent_memos(twitter: TwitterClient, user: TwitterUser) -> list[TweetMem
     return memos
 
 
-def create_new_memo(notion: NotionClient, memo: TweetMemo) -> None:
+def create_new_memo(notion: NotionClient, memo: TweetMemo) -> dict[str, Any]:
     """Create new memos in my notion."""
     tags = [{"name": tag} for tag in memo.tags]
 
+    children = [
+        # https://developers.notion.com/reference/block#embed-blocks
+        {
+            "object": "block",
+            "type": "embed",
+            "embed": {"url": tweet.url},
+        }
+        for tweet in memo.conversation
+    ]
+
     payload = {
         "parent": {"database_id": CFG.NOTION_DATABASE_ID},
-        # "children": [],
+        "children": children,
         "icon": {"emoji": "🪶"},
         "properties": {
-            "URL": {
-                "url": f"https://twitter.com/{memo.author.username}/status/{memo.conversation[0].id}"
-            },
+            "URL": {"url": memo.conversation[0].url},
             "Content": {
                 "rich_text": [
                     {
                         "type": "text",
-                        "text": {"content": memo.thread_text},
+                        "text": {
+                            "content": memo.conversation[0].text,
+                            "link": {"url": memo.conversation[0].url},
+                        },
                     }
                 ]
             },
             "tweet_date": {"date": {"start": "2022-11-28"}},
-            "tweet_id": {"number": memo.my_tweet.id},
             "Tags": {"multi_select": tags},
             "Author": {
                 "title": [
@@ -127,13 +151,17 @@ def main() -> None:
     notion = NotionClient(auth=CFG.NOTION_SECRET_KEY.get_secret_value())
     database = notion.databases.query(database_id=CFG.NOTION_DATABASE_ID)
 
-    already_stored: set[int] = set()
+    already_stored: set[str] = set()
     for row in database["results"]:  # type: ignore
-        tweet_id = row["properties"]["tweet_id"]["number"]
-        if tweet_id is not None:
-            already_stored.add(tweet_id)
+        tweet_url = row["properties"]["URL"]["url"]
+        if tweet_url is not None:
+            already_stored.add(tweet_url)
 
-    new_memos = [memo for memo in memos if memo.my_tweet.id not in already_stored]
+    new_memos = [
+        memo
+        for memo in memos
+        if memo.conversation[0].url not in already_stored
+    ]
     if len(new_memos) == 0:
         logger.info("Found no new memo.")
         return
@@ -152,6 +180,8 @@ if __name__ == "__main__":
     if args.debug:
         try:
             main()
+        except BdbQuit:
+            pass
         except Exception:
             __import__("pdb").post_mortem()  # POSTMORTEM
     else:

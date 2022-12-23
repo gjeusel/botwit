@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from datetime import datetime
 from typing import Any, Generator, Literal, Sequence, TypedDict
 
@@ -56,7 +55,7 @@ class TwitterError(Exception):
         elif self.message:
             return self.message
         else:
-            raise super().__str__()
+            raise super().__str__()  # type: ignore
 
 
 def handle_http_error(response: httpx.Response) -> httpx.Response:
@@ -79,7 +78,7 @@ def handle_twitter_error(response: httpx.Response) -> httpx.Response:
     response.read()  # ensure response is read before parsing json
     data = response.json()
     if data.get("errors"):
-        raise TwitterError(data.get("errors"))
+        raise TwitterError(payload=data.get("errors"))
     return response
 
 
@@ -155,6 +154,15 @@ class Tweet(BaseModel):
     def author(self) -> User | None:
         return {u.id: u for u in self.users or []}.get(self.author_id)
 
+    @property
+    def url(self) -> str:
+        if self.author:
+            return f"https://twitter.com/{self.author.username}/status/{self.id}"
+        else:
+            raise TwitterError(
+                message=f"Can't build url while missing author username ({self!r}) "
+            )
+
     def __repr__(self) -> str:
         core = f"Tweet n°{self.id}"
 
@@ -169,7 +177,7 @@ class Tweet(BaseModel):
         return f"<{core}> {text}"
 
 
-def _parse_tweets_payload(payload: dict[str, Any]) -> Tweet | list[Tweet]:
+def _parse_tweets_payload(payload: dict[str, Any]) -> list[Tweet]:
     if "data" not in payload:
         return []
 
@@ -178,7 +186,7 @@ def _parse_tweets_payload(payload: dict[str, Any]) -> Tweet | list[Tweet]:
     included_users = payload.get("includes", {}).get("users", [])
     if isinstance(data, dict):
         data.update({"tweets": included_tweets, "users": included_users})
-        return Tweet(**data)
+        return [Tweet(**data)]
     else:
         map_id_includes = {
             t["id"]: t
@@ -269,9 +277,7 @@ class PagTweetQueryParams(PaginationParams, TweetQueryParams):
 
 
 def _parse_params(params: PagTweetQueryParams) -> dict[str, Any]:
-    sain_params: dict[str, Any]
-
-    sain_params = {
+    sain_params: dict[str, Any] = {
         "tweet.fields": ",".join(
             set(params.get("fields", ())) | set(DEFAULT_TWEET_FIELDS)
         ),
@@ -349,7 +355,7 @@ class TwitterClient(httpx.Client):
             f"/2/tweets/{id}",
             params=_parse_params({"fields": fields, "expansions": expansions}),
         )
-        return _parse_tweets_payload(resp.json())
+        return _parse_tweets_payload(resp.json())[0]
 
     # _______ Search endpoint _______
 
