@@ -100,7 +100,7 @@ jobs:
           name: coverage
           path: coverage
 
-  coverage-combine:
+  coverage-upload:
     needs: [test]
     runs-on: ubuntu-latest
     steps:
@@ -116,11 +116,10 @@ jobs:
           name: coverage
           path: coverage
 
-      - run: pip install coverage[toml]
-
-      - run: ls -la coverage
-      - run: coverage combine coverage
-      - run: coverage report
+      - name: Upload to codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./coverage
 
   check-docs-build:
     runs-on: ubuntu-latest
