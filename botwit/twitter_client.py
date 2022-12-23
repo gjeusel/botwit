@@ -279,9 +279,9 @@ class PagTweetQueryParams(PaginationParams, TweetQueryParams):
 def _parse_params(params: PagTweetQueryParams) -> dict[str, Any]:
     sain_params: dict[str, Any] = {
         "tweet.fields": ",".join(
-            set(params.get("fields", ())) | set(DEFAULT_TWEET_FIELDS)
+            sorted(set(params.get("fields", ())) | set(DEFAULT_TWEET_FIELDS))
         ),
-        "expansions": ",".join(params.get("expansions", ())),
+        "expansions": ",".join(sorted(params.get("expansions", ()))),
     }
     if params.get("max_results"):
         sain_params["max_results"] = params["max_results"]
@@ -290,6 +290,8 @@ def _parse_params(params: PagTweetQueryParams) -> dict[str, Any]:
 
 
 class TwitterClient(httpx.Client):
+    auth: TwitterOAuth2ClientCredentials
+
     def __init__(
         self,
         consumer_key: str,

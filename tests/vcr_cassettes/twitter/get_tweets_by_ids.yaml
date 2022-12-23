@@ -1,0 +1,67 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      cookie:
+      - guest_id=v1%3A167180033848820469
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.1
+    method: GET
+    uri: https://api.twitter.com/2/tweets?ids=1605264002111643651%2C1605198012636356608%2C1604623003614154752&tweet.fields=author_id%2Cconversation_id%2Ccreated_at%2Cid%2Ctext&expansions=
+  response:
+    content: '{"data":[{"author_id":"2264823498","id":"1605264002111643651","created_at":"2022-12-20T18:08:57.000Z","text":"@pascalriche
+      @researchremora @gjeusel notion map culture","conversation_id":"1605102651514970116","edit_history_tweet_ids":["1605264002111643651"]},{"author_id":"2264823498","id":"1605198012636356608","created_at":"2022-12-20T13:46:44.000Z","text":"@erikdkennedy
+      @gjeusel notion ai webdesign","conversation_id":"1604889410608459776","edit_history_tweet_ids":["1605198012636356608"]},{"author_id":"2264823498","id":"1604623003614154752","created_at":"2022-12-18T23:41:51.000Z","text":"@Insharamin
+      @gjeusel notion freelance recruitment","conversation_id":"1597106007679074306","edit_history_tweet_ids":["1604623003614154752"]}]}'
+    headers:
+      api-version:
+      - '2.59'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '339'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Fri, 23 Dec 2022 12:58:58 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_f
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 83f923bd683a035b8310c7e15fcfc92a292a0fcf7ac508ba6dfecc54470277a2
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '300'
+      x-rate-limit-remaining:
+      - '297'
+      x-rate-limit-reset:
+      - '1671801072'
+      x-response-time:
+      - '141'
+      x-transaction-id:
+      - de342d795b33104c
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

@@ -33,6 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "vcrpy==4.2.*", # record http requests
   # types
   "typing_extensions",
   "types-pytz",
@@ -84,7 +85,7 @@ extend-select = [
   "ICN", # flake8-import-conventions
   "B",   # flake8-bugbear
   # "A",   # flake8-builtins
-  "I",   # isort
+  "I", # isort
 ]
 
 ignore = [
