@@ -100,7 +100,7 @@ jobs:
           name: coverage
           path: coverage
 
-  coverage-upload:
+  coverage-combine:
     needs: [test]
     runs-on: ubuntu-latest
     steps:
@@ -116,10 +116,18 @@ jobs:
           name: coverage
           path: coverage
 
-      - name: Upload to codecov
-        uses: codecov/codecov-action@v3
+      - run: pip install coverage[toml]
+
+      - run: ls -la coverage
+      - run: coverage combine coverage
+      - run: coverage report
+      - run: coverage html --show-contexts --title "pydantic coverage for ${{ github.sha }}"
+
+      - name: Store coverage html
+        uses: actions/upload-artifact@v3
         with:
-          directory: ./coverage
+          name: coverage-html
+          path: htmlcov
 
   check-docs-build:
     runs-on: ubuntu-latest
