@@ -62,9 +62,6 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# mkdocs doc
-site/
-
 # PyBuilder
 target/
 
@@ -88,8 +85,8 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
+# mkdocs doc
+docs-build
 
 # Excel opened:
 \~\$*
