@@ -30,6 +30,6 @@ repos:
             --extra,
             prod,
             --output-file,
-            requirements/requirements.txt,
+            requirements/requirements-prod.txt,
             pyproject.toml,
           ]
