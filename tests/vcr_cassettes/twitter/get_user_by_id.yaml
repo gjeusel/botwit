@@ -1,0 +1,64 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      cookie:
+      - guest_id=v1%3A167180033848820469
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.1
+    method: GET
+    uri: https://api.twitter.com/2/users/2264823498
+  response:
+    content: '{"data":{"id":"2264823498","name":"Gjeusel","username":"Gjeusel"}}'
+    headers:
+      api-version:
+      - '2.59'
+      cache-control:
+      - no-cache, no-store, max-age=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '75'
+      content-type:
+      - application/json; charset=utf-8
+      date:
+      - Fri, 23 Dec 2022 12:58:58 UTC
+      perf:
+      - '7626143928'
+      server:
+      - tsa_f
+      strict-transport-security:
+      - max-age=631138519
+      x-access-level:
+      - read
+      x-connection-hash:
+      - 83f923bd683a035b8310c7e15fcfc92a292a0fcf7ac508ba6dfecc54470277a2
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - SAMEORIGIN
+      x-rate-limit-limit:
+      - '300'
+      x-rate-limit-remaining:
+      - '296'
+      x-rate-limit-reset:
+      - '1671800937'
+      x-response-time:
+      - '117'
+      x-transaction-id:
+      - 6650daaa486d4c68
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1

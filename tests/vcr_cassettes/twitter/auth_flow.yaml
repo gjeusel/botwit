@@ -1,0 +1,75 @@
+interactions:
+- request:
+    body: grant_type=client_credentials
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '29'
+      content-type:
+      - application/x-www-form-urlencoded
+      host:
+      - api.twitter.com
+      user-agent:
+      - python-httpx/0.23.1
+    method: POST
+    uri: https://api.twitter.com/oauth2/token
+  response:
+    content: '{"token_type": "bearer", "access_token": "fake-access-token"}'
+    headers:
+      cache-control:
+      - no-cache, no-store, must-revalidate, pre-check=0, post-check=0
+      content-disposition:
+      - attachment; filename=json.json
+      content-encoding:
+      - gzip
+      content-length:
+      - '153'
+      content-type:
+      - application/json;charset=utf-8
+      date:
+      - Fri, 23 Dec 2022 12:58:58 GMT
+      expires:
+      - Tue, 31 Mar 1981 05:00:00 GMT
+      last-modified:
+      - Fri, 23 Dec 2022 12:58:58 GMT
+      ml:
+      - A
+      perf:
+      - '7626143928'
+      pragma:
+      - no-cache
+      server:
+      - tsa_f
+      set-cookie:
+      - guest_id=v1%3A167180033804018696; Max-Age=34214400; Expires=Tue, 23 Jan 2024
+        12:58:58 GMT; Path=/; Domain=.twitter.com; Secure; SameSite=None
+      status:
+      - 200 OK
+      strict-transport-security:
+      - max-age=631138519
+      x-connection-hash:
+      - b0be200fc2d30aeca2c413fb2feb235de931d846aaef83f1838c0ba9b25555c7
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-response-time:
+      - '101'
+      x-transaction:
+      - f63541bd328ef48d
+      x-transaction-id:
+      - f63541bd328ef48d
+      x-twitter-response-tags:
+      - BouncerCompliant
+      x-ua-compatible:
+      - IE=edge,chrome=1
+      x-xss-protection:
+      - '0'
+    http_version: HTTP/1.1
+    status_code: 200
+version: 1
