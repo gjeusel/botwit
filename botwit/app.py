@@ -11,6 +11,6 @@ async def homepage(request: Request) -> PlainTextResponse:
     return PlainTextResponse("gut")
 
 
-routes = [Route("/", endpoint=homepage)]
+routes = [Route("/", endpoint=homepage, methods=["POST", "GET"])]
 
 app = Starlette(debug=True, routes=routes)
