@@ -259,4 +259,4 @@ jobs:
         SCW_DEFAULT_PROJECT_ID: ${{secrets.SCW_DEFAULT_PROJECT_ID}}
     steps:
       - name: Update Container
-        run: scw --profile perso container container update ${{secrets.SCW_DOCKER_ID}} redeploy=true
+        run: container container update ${{secrets.SCW_DOCKER_ID}} redeploy=true
