@@ -16,4 +16,4 @@ ADD . $APP_DIR
 
 RUN pip install --editable .
 
-CMD ["botwit", "serve"]
+CMD ["botwit", "serve", "--host", "0.0.0.0", "--port", "8000"]

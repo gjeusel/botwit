@@ -25,9 +25,15 @@ def sync(debug: Optional[bool] = typer.Option(None, "--debug/--no-debug")) -> No
 @cli.command("serve")
 def run_server(
     port: int = typer.Option(8000, help="port to use"),
+    host: str = typer.Option("127.0.0.1", help="host to use"),
     watch: Optional[bool] = typer.Option(None, "--watch/--no-watch"),
 ) -> None:
-    kwargs: dict[str, Any] = {"port": port, "app": "botwit.app:app", "reload": watch}
+    kwargs: dict[str, Any] = {
+        "port": port,
+        "host": host,
+        "app": "botwit.app:app",
+        "reload": watch,
+    }
     uvicorn.run(**kwargs)
 
 
