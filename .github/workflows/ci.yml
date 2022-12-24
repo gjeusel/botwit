@@ -212,7 +212,8 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            rg.fr-par.scw.cloud/funcscwlabforfunfl272gtp/botwit
+            ${{secrets.SCW_DOCKER_REGISTRY}}/botwit
+            # guigze/botwit
           # generate Docker tags based on the following events/attributes
           tags: |
             # type=schedule
@@ -261,4 +262,6 @@ jobs:
         SCW_DEFAULT_REGION: fr-par
     steps:
       - name: Update Container
-        run: container container update ${{secrets.SCW_DOCKER_ID}} redeploy=true
+        run: >
+          container container update ${{secrets.SCW_DOCKER_ID}}
+          registry-image=${{secrets.SCW_DOCKER_REGISTRY}}/botwit:sha-`git rev-parse --short HEAD`
