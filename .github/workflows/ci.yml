@@ -244,3 +244,19 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    name: Deploy Scaleway
+    needs: [docker]
+    if: "success() && startsWith(github.ref, 'refs/tags/')"
+    runs-on: ubuntu-latest
+    container:
+      image: scaleway/cli:2.7
+      env:
+        SCW_ACCESS_KEY: ${{secrets.SCW_ACCESS_KEY}}
+        SCW_SECRET_KEY: ${{secrets.SCW_SECRET_KEY}}
+        SCW_DEFAULT_ORGANIZATION_ID: ${{secrets.SCW_DEFAULT_ORGANIZATION_ID}}
+        SCW_DEFAULT_PROJECT_ID: ${{secrets.SCW_DEFAULT_PROJECT_ID}}
+    steps:
+      - name: Update Container
+        run: scw --profile perso container container update ${{secrets.SCW_DOCKER_ID}} redeploy=true
