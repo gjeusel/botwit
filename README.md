@@ -1,7 +1,7 @@
 <h1 align="center"> botwit </h1>
 
 <p align="center">
-  <a href="https://github.com/gjeusel/botwit/actions?query=workflow%3ACI+branch%3A+main+">
+  <a href="https://github.com/gjeusel/botwit/actions?query=workflow%3ACI+branch%3Amain">
       <img src="https://github.com/gjeusel/botwit/workflows/CI/badge.svg?event=push&branch=main" alt="Test Suite" onerror="this.style.display='none'">
   </a>
   <a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/gjeusel/botwit" alt="Test Coverage" onerror="this.style.display='none'">
