@@ -286,5 +286,5 @@ jobs:
     steps:
       - name: Update Container
         run: >
-          --debug container container update ${{secrets.SCW_DOCKER_ID}}
+          /scw --debug container container update ${{secrets.SCW_DOCKER_ID}}
           registry-image=${{secrets.SCW_DOCKER_REGISTRY}}/botwit:${{ github.sha }}
