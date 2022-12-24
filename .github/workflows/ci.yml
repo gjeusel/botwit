@@ -222,7 +222,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha
+            type=sha,prefix=,suffix=,format=long
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Set up QEMU
@@ -264,4 +264,4 @@ jobs:
       - name: Update Container
         run: >
           container container update ${{secrets.SCW_DOCKER_ID}}
-          registry-image=${{secrets.SCW_DOCKER_REGISTRY}}/botwit:sha-`git rev-parse --short HEAD`
+          registry-image=${{secrets.SCW_DOCKER_REGISTRY}}/botwit:${{ github.sha }}
