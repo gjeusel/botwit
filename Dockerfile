@@ -16,4 +16,4 @@ ADD . $APP_DIR
 
 RUN pip install --editable .
 
-CMD ["python", "-c", "print(__import__('botwit').__version__)"]
+CMD ["botwit", "serve"]
