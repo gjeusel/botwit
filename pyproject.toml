@@ -22,13 +22,21 @@ classifiers = [
 requires-python = ">=3.10"
 dynamic = ["version"]
 
+scripts = { botwit = "botwit:__main__.cli" }
+
 dependencies = [
-  "pydantic[dotenv]",
+  # clients
   "httpx==0.23.*",
   "httpx_auth==0.15.*",
   "notion-client==2.0.0",
+  #
+  "pydantic[dotenv]",
+  "typer",
   "structlog",
   "pytz",
+  #
+  "uvicorn[standard]",
+  "starlette",
 ]
 
 [project.optional-dependencies]
@@ -78,19 +86,23 @@ doc = [
 all = ["botwit[dev]", "botwit[doc]"]
 
 [tool.ruff]
-select = ["E", "F"]
-extend-select = [
+select = [
+  "E",
+  "F",
   "UP",  # pyupgrade
   "C4",  # flake8-comprehensions
   "ICN", # flake8-import-conventions
   "B",   # flake8-bugbear
-  # "A",   # flake8-builtins
-  "I", # isort
+  "A",   # flake8-builtins
+  "I",   # isort
 ]
 
 ignore = [
   "E501", # line too long
+  "A001", # Variable `id` is shadowing a python builtin
+  "A002", # Argument `id` is shadowing a python builtin
   "A003", # Class attribute `id` is shadowing a python builtin
+  "B008", # do not perform function call in args defaults
 ]
 
 # fix = true  # always auto-fix
@@ -98,10 +110,7 @@ unfixable = [
   # "F401",  # import but unused
 ]
 
-per-file-ignores = { "__init__.py" = [
-  # "F401", # import but unused
-  # "E402", # import not at top file
-] }
+per-file-ignores = { "botwit/__main__.py" = ["UP007"] }
 
 [tool.ruff.flake8-import-conventions.aliases]
 numpy = "np"
