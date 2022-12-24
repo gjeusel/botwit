@@ -10,6 +10,7 @@ on:
 
 jobs:
   lint:
+    name: Lint (pre-commit)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -45,7 +46,7 @@ jobs:
           extra_args: --all-files --verbose
 
   test:
-    name: test py${{ matrix.python-version }} on ${{ matrix.os }}
+    name: pytest - py${{ matrix.python-version }} - ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -101,6 +102,7 @@ jobs:
           path: coverage
 
   coverage-combine:
+    name: Coverage
     needs: [test]
     runs-on: ubuntu-latest
     steps:
@@ -130,6 +132,7 @@ jobs:
           path: htmlcov
 
   docs:
+    name: Docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -195,3 +198,49 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    needs: [lint, test, docs]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            guigze/botwit
+            # ghcr.io/${{github.repository_owner}}/botwit
+          # generate Docker tags based on the following events/attributes
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: guigze
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
