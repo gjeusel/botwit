@@ -137,13 +137,13 @@ def create_new_memo(notion: NotionClient, memo: TweetMemo) -> dict[str, Any]:
     return notion.pages.create(**payload)  # type: ignore
 
 
-def sync_twitter_to_notion() -> None:
+def sync_twitter_to_notion(username: str = CFG.TWITTER_USERNAME) -> None:
     twitter = TwitterClient(
         consumer_key=CFG.TWITTER_CONSUMER_KEY.get_secret_value(),
         consumer_secret=CFG.TWITTER_CONSUMER_SECRET.get_secret_value(),
     )
 
-    user = twitter.get_user(username="@gjeusel")
+    user = twitter.get_user(username=username)
 
     memos = get_recent_memos(twitter=twitter, user=user)
 
