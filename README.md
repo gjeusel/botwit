@@ -8,7 +8,7 @@
       <img src="https://coverage-badge.samuelcolvin.workers.dev/gjeusel/botwit.svg" alt="Coverage">
   </a>
   <a href="https://pypi.org/project/botwit/">
-      <img src="https://badge.fury.io/py/botwit.svg" alt="Package version" onerror="this.style.display='none'">
+      <img src="https://img.shields.io/pypi/v/botwit" alt="Package version" onerror="this.style.display='none'">
   </a>
   <a href="https://gjeusel.github.io/botwit/">
     <img src="https://img.shields.io/badge/mkdocs-pages-brightgreen" alt="MKDocs github page">
